@@ -84,3 +84,12 @@ def test_query_times_out(db_path: Path) -> None:
         run_query(db_path, heavy_sql, max_rows=1000, timeout_seconds=0.05)
     assert exc_info.value.code == ErrorCode.SQL_EXECUTION_ERROR
     assert "timed out" in exc_info.value.message.lower()
+
+
+def test_huge_values_are_rejected_instead_of_eating_memory(db_path: Path) -> None:
+    # A single SQLite operation can't be interrupted by the timeout, so the value size
+    # itself has to be capped.
+    _load_sales(db_path)
+    with pytest.raises(AppError) as exc_info:
+        run_query(db_path, "SELECT length(randomblob(500000000))", max_rows=1000, timeout_seconds=5)
+    assert exc_info.value.code == ErrorCode.SQL_EXECUTION_ERROR

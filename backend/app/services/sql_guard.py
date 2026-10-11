@@ -70,15 +70,21 @@ def validate_and_prepare(sql: str, max_rows: int) -> PreparedQuery:
                 ErrorCode.SQL_NOT_ALLOWED, "Only read-only SELECT statements are allowed", 400
             )
 
-    for table in statement.find_all(exp.Table):
-        if is_service_table(table.name):
-            raise AppError(
-                ErrorCode.SQL_NOT_ALLOWED, f"Table '{table.name}' is not accessible", 400
-            )
+    # Tables and table-valued functions alike: `FROM pragma_table_list` parses as a Table,
+    # `FROM pragma_table_info('x')` as an anonymous function call.
+    for node in statement.find_all(exp.Table, exp.Anonymous):
+        if _is_hidden(node.name):
+            raise AppError(ErrorCode.SQL_NOT_ALLOWED, f"'{node.name}' is not accessible", 400)
 
     display_limit, probe_limit = _resolve_limits(statement, max_rows)
     prepared = statement.limit(probe_limit)
     return PreparedQuery(sql=prepared.sql(dialect="sqlite"), display_limit=display_limit)
+
+
+def _is_hidden(name: str) -> bool:
+    """Service tables, plus pragma_* table-valued functions: they expose the whole schema
+    (`pragma_table_list` lists service tables too), which the AI and users must not see."""
+    return is_service_table(name) or name.lower().startswith("pragma_")
 
 
 def _resolve_limits(statement: exp.Query, max_rows: int) -> tuple[int, int]:

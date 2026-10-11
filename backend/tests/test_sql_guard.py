@@ -24,6 +24,19 @@ def test_keeps_limit_within_max_rows() -> None:
     assert prepared.display_limit == 5
 
 
+def test_negative_limit_means_unlimited_in_sqlite_so_it_is_capped() -> None:
+    prepared = validate_and_prepare("SELECT * FROM sales LIMIT -1", max_rows=1000)
+    assert "LIMIT 1001" in prepared.sql
+    assert prepared.display_limit == 1000
+
+
+def test_offset_comma_syntax_keeps_offset_and_caps_count() -> None:
+    prepared = validate_and_prepare("SELECT * FROM sales LIMIT 2, 30", max_rows=10)
+    assert "LIMIT 11" in prepared.sql
+    assert "OFFSET 2" in prepared.sql
+    assert prepared.display_limit == 10
+
+
 def test_allows_cte() -> None:
     sql = (
         "WITH totals AS (SELECT city, SUM(amount) AS total FROM sales GROUP BY city) "
@@ -90,6 +103,10 @@ def test_rejects_second_statement_smuggled_after_select() -> None:
         "SELECT * FROM sqlite_master",
         "SELECT (SELECT COUNT(*) FROM _columns_meta)",
         "SELECT * FROM sales WHERE city IN (SELECT original_name FROM _columns_meta)",
+        # pragma_* table-valued functions expose the schema, service tables included
+        "SELECT * FROM pragma_table_info('_columns_meta')",
+        "SELECT name FROM pragma_table_list",
+        "SELECT * FROM sales, pragma_index_list('sales')",
     ],
 )
 def test_rejects_service_table_access(sql: str) -> None:

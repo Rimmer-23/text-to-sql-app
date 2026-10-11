@@ -20,6 +20,12 @@ from app.services.sql_guard import validate_and_prepare
 # catch a runaway query promptly, large enough not to measurably slow queries down.
 _PROGRESS_HANDLER_INTERVAL = 1000
 
+# The timeout can't interrupt a single SQLite operation, and one call like
+# `randomblob(900000000)` allocates ~900 MB on its own. Capping the size of any one value
+# (string, blob or row) makes such queries fail fast instead. Uploads are capped at 50 MB
+# per file, so no legitimate cell comes close.
+_MAX_VALUE_BYTES = 10 * 1024 * 1024
+
 
 @dataclass
 class QueryResult:
@@ -35,6 +41,9 @@ def run_query(db_path: Path, sql: str, *, max_rows: int, timeout_seconds: float)
 
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
+        conn.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, _MAX_VALUE_BYTES)
+        # The guard already rejects ATTACH; this makes it impossible at the engine level too.
+        conn.setlimit(sqlite3.SQLITE_LIMIT_ATTACHED, 0)
         deadline = time.monotonic() + timeout_seconds
         conn.set_progress_handler(
             lambda: 1 if time.monotonic() > deadline else 0, _PROGRESS_HANDLER_INTERVAL
