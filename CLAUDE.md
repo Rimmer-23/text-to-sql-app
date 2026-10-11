@@ -70,22 +70,27 @@ text-to-sql/
 │       └── test_query.py
 └── frontend/
     ├── package.json
-    ├── vite.config.ts          # proxy /api → http://localhost:8000
+    ├── vite.config.ts          # proxy /api → http://localhost:8000; настройки vitest
     └── src/
         ├── main.tsx
-        ├── App.tsx
+        ├── App.tsx             # раскладка: слева данные, справа превью / результат
+        ├── styles.css          # токены (цвета, шрифты) + стили, светлая и тёмная тема
+        ├── format.ts           # plural() и прочие форматтеры
         ├── api/
-        │   └── client.ts       # все вызовы бэкенда
+        │   └── client.ts       # все вызовы бэкенда; ошибки → ApiError(code, message)
         ├── types/
-        │   └── index.ts        # типы ответов API
+        │   └── index.ts        # типы ответов API (зеркало models/schemas.py)
         ├── hooks/
-        │   └── useWorkspace.ts # workspace_id в localStorage, загрузка схемы
+        │   └── useWorkspace.ts # workspace_id в localStorage, загрузка схемы, upload/remove
+        ├── test/               # setup для vitest и mockFetch
         └── components/
             ├── FileUpload.tsx  # drag&drop, несколько файлов сразу
-            ├── TableList.tsx   # список загруженных таблиц и их колонок
-            ├── QueryInput.tsx  # поле ввода вопроса
-            ├── SqlPreview.tsx  # показывает сгенерированный SQL
-            └── ResultTable.tsx # универсальная таблица: колонки из ответа API
+            ├── TableList.tsx   # список таблиц, удаление с подтверждением
+            ├── TablePreview.tsx # колонки и первые строки выбранной таблицы
+            ├── DataTable.tsx   # общая таблица «green-bar»: превью и результаты запросов
+            ├── QueryInput.tsx  # поле ввода вопроса (шаг 6)
+            ├── SqlPreview.tsx  # показывает сгенерированный SQL (шаг 6)
+            └── ResultTable.tsx # результат запроса на основе DataTable (шаг 6)
 ```
 
 ## API
@@ -154,7 +159,11 @@ SQL от AI считается недоверенным вводом.
 
 ## Фронтенд
 
+- Дизайн: «green-bar» — светло-зелёные полосы строк, как на старой бумаге для распечаток таблиц.
+  Шрифты: Hanken Grotesk (интерфейс), IBM Plex Mono (данные, имена таблиц, SQL). Цвета — только
+  через CSS-переменные в `styles.css`. Без капса в подписях.
 - `workspace_id` хранится в localStorage; если его нет — создаётся при первой загрузке файла.
+  Если сервер ответил `WORKSPACE_NOT_FOUND` — id забывается, следующая загрузка создаёт новый.
 - `ResultTable` строит колонки из `columns` ответа — никакой генерации HTML через AI.
 - Показывать сгенерированный SQL (свёрнуто по умолчанию) — для доверия и отладки.
 - Состояния: загрузка, пустой результат, ошибка (показывать `message`).
@@ -177,7 +186,8 @@ CORS_ORIGINS=http://localhost:5173
 
 Запуск:
 - Backend: `cd backend && uvicorn app.main:app --reload --port 8000`
-- Frontend: `cd frontend && npm run dev`
+- Frontend: `cd frontend && npm install && npm run dev` (Node 22.22+ или 24.15+)
+- Проверки фронтенда: `npm test`, `npm run lint`, `npm run format:check`, `npm run build`
 
 ## Порядок разработки (MVP)
 

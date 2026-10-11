@@ -17,4 +17,16 @@ API docs: http://localhost:8000/docs
 
 Tests: `pytest`
 
+## Frontend
+
+Requires Node.js 22.22+ (or 24.15+). Start the backend first.
+
+```bash
+cd frontend
+npm install
+npm run dev                   # http://localhost:5173, /api is proxied to :8000
+```
+
+Checks: `npm test`, `npm run lint`, `npm run build`
+
 Architecture details are in [CLAUDE.md](CLAUDE.md).
