@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.errors import AppError, ErrorCode
+from app.services.schema_service import is_service_table
 from app.services.workspace_service import COLUMNS_META_TABLE
 from app.utils.naming import make_unique, normalize_column_name, normalize_table_name
 
@@ -78,6 +79,24 @@ def ingest_files(db_path: Path, files: list[UploadedFile]) -> list[IngestedTable
             result.append(table)
         conn.commit()
         return result
+    finally:
+        conn.close()
+
+
+def delete_table(db_path: Path, table_name: str) -> None:
+    """Drop a user table together with its column metadata. Service tables are invisible here."""
+    conn = sqlite3.connect(db_path)
+    try:
+        exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table_name,)
+        ).fetchone()
+        if exists is None or is_service_table(table_name):
+            raise AppError(ErrorCode.TABLE_NOT_FOUND, f"Table '{table_name}' not found", 404)
+
+        quoted = '"' + table_name.replace('"', '""') + '"'
+        conn.execute(f"DROP TABLE {quoted}")
+        conn.execute(f"DELETE FROM {COLUMNS_META_TABLE} WHERE table_name = ?", (table_name,))
+        conn.commit()
     finally:
         conn.close()
 

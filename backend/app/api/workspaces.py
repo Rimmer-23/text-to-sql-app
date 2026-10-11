@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 
 from app.config import Settings, get_settings
 from app.models.schemas import SchemaResponse, TableSchema, WorkspaceCreated
-from app.services import schema_service, workspace_service
+from app.services import ingest_service, schema_service, workspace_service
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -23,3 +23,11 @@ def get_schema(workspace_id: str, settings: Settings = Depends(get_settings)) ->
         workspace_id=workspace_id,
         tables=[TableSchema.model_validate(asdict(table)) for table in tables],
     )
+
+
+@router.delete("/{workspace_id}/tables/{table_name}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_table(
+    workspace_id: str, table_name: str, settings: Settings = Depends(get_settings)
+) -> None:
+    db_path = workspace_service.get_db_path(settings.data_dir, workspace_id)
+    ingest_service.delete_table(db_path, table_name)

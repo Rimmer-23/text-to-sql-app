@@ -111,7 +111,8 @@ text-to-sql/
 ```
 
 Ошибки — единый формат: `{ "error": { "code": "...", "message": "..." } }`
-Коды: `INVALID_FILE`, `SQL_NOT_ALLOWED`, `SQL_EXECUTION_ERROR`, `AI_ERROR`, `WORKSPACE_NOT_FOUND`.
+Коды: `INVALID_FILE`, `INVALID_REQUEST`, `SQL_NOT_ALLOWED`, `SQL_EXECUTION_ERROR`, `AI_ERROR`,
+`WORKSPACE_NOT_FOUND`, `TABLE_NOT_FOUND`.
 
 ## Загрузка файлов (ingest)
 

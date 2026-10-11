@@ -12,6 +12,7 @@ class ErrorCode(StrEnum):
     SQL_EXECUTION_ERROR = "SQL_EXECUTION_ERROR"
     AI_ERROR = "AI_ERROR"
     WORKSPACE_NOT_FOUND = "WORKSPACE_NOT_FOUND"
+    TABLE_NOT_FOUND = "TABLE_NOT_FOUND"
 
 
 class AppError(Exception):

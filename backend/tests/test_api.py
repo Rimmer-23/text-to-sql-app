@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -82,3 +83,35 @@ def test_upload_without_files(client: TestClient) -> None:
     response = client.post(f"/api/workspaces/{workspace_id}/files")
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "INVALID_REQUEST"
+
+
+def test_delete_table(client: TestClient) -> None:
+    workspace_id = create_workspace(client)
+    base = f"/api/workspaces/{workspace_id}"
+    files = [
+        ("files", ("sales.csv", b"city,amount\nPrague,100\n", "text/csv")),
+        ("files", ("customers.csv", b"name\nJohn\n", "text/csv")),
+    ]
+    assert client.post(f"{base}/files", files=files).status_code == 200
+
+    response = client.delete(f"{base}/tables/sales")
+    assert response.status_code == 204
+    assert [t["name"] for t in client.get(f"{base}/schema").json()["tables"]] == ["customers"]
+
+    # Metadata went with the table: re-uploading reuses the name instead of getting `sales_2`.
+    response = client.post(f"{base}/files", files=[files[0]])
+    assert response.json()["tables"][0]["name"] == "sales"
+
+
+@pytest.mark.parametrize("table", ["missing", "_columns_meta", "sqlite_master"])
+def test_delete_unknown_or_service_table(client: TestClient, table: str) -> None:
+    workspace_id = create_workspace(client)
+    response = client.delete(f"/api/workspaces/{workspace_id}/tables/{table}")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "TABLE_NOT_FOUND"
+
+
+def test_delete_table_in_unknown_workspace(client: TestClient) -> None:
+    response = client.delete("/api/workspaces/00000000-0000-0000-0000-000000000000/tables/sales")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "WORKSPACE_NOT_FOUND"
