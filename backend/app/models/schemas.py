@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 
 class HealthResponse(BaseModel):
@@ -47,3 +47,17 @@ class TableSchema(BaseModel):
 class SchemaResponse(BaseModel):
     workspace_id: str
     tables: list[TableSchema]
+
+
+class QueryRequest(BaseModel):
+    question: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+    ]
+
+
+class QueryResponse(BaseModel):
+    sql: str
+    columns: list[str]
+    rows: list[list[Any]]
+    row_count: int
+    truncated: bool

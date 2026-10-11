@@ -11,7 +11,11 @@ from app.services import workspace_service
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    return Settings(data_dir=tmp_path / "data", max_upload_mb=1)
+    # Explicit values win over backend/.env and env vars, so tests never pick up a real API
+    # key and never call a real AI provider.
+    return Settings(
+        _env_file=None, data_dir=tmp_path / "data", max_upload_mb=1, ai_api_key="", ai_model=""
+    )
 
 
 @pytest.fixture

@@ -34,7 +34,10 @@ _FORBIDDEN_NODE_TYPES: tuple[type[exp.Expression], ...] = (
 
 @dataclass
 class PreparedQuery:
+    # Executed: carries the probe limit (one row more than displayed, see _resolve_limits).
     sql: str
+    # Shown to the user: the same query with the limit they actually get.
+    display_sql: str
     # Rows beyond this count were cut off by our policy limit, not asked for by the query
     # itself, so the caller should report them as truncated.
     display_limit: int
@@ -77,8 +80,11 @@ def validate_and_prepare(sql: str, max_rows: int) -> PreparedQuery:
             raise AppError(ErrorCode.SQL_NOT_ALLOWED, f"'{node.name}' is not accessible", 400)
 
     display_limit, probe_limit = _resolve_limits(statement, max_rows)
-    prepared = statement.limit(probe_limit)
-    return PreparedQuery(sql=prepared.sql(dialect="sqlite"), display_limit=display_limit)
+    return PreparedQuery(
+        sql=statement.limit(probe_limit).sql(dialect="sqlite"),
+        display_sql=statement.limit(display_limit).sql(dialect="sqlite"),
+        display_limit=display_limit,
+    )
 
 
 def _is_hidden(name: str) -> bool:

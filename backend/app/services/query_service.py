@@ -64,7 +64,7 @@ def run_query(db_path: Path, sql: str, *, max_rows: int, timeout_seconds: float)
         truncated = len(fetched) > prepared.display_limit
         rows = [list(row) for row in fetched[: prepared.display_limit]]
         return QueryResult(
-            sql=prepared.sql,
+            sql=prepared.display_sql,
             columns=columns,
             rows=rows,
             row_count=len(rows),

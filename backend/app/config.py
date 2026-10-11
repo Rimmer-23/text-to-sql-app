@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ai_provider: str = "gemini"
     ai_model: str = ""
     ai_api_key: str = ""
+    ai_timeout_seconds: float = 30
 
     data_dir: Path = Path("./data")
     max_upload_mb: int = 50
