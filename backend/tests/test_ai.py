@@ -13,7 +13,7 @@ SALES = SchemaTable(
     name="sales",
     row_count=2,
     columns=[
-        SchemaColumn(name="gorod", original_name="Город", type="TEXT"),
+        SchemaColumn(name="city", original_name="City", type="TEXT"),
         SchemaColumn(name="amount", original_name="amount", type="INTEGER"),
     ],
     sample_rows=[["Praha", 100], ["x" * 500, 250]],
@@ -40,10 +40,10 @@ def test_extract_sql_strips_markdown(raw: str) -> None:
 
 def test_cannot_answer_becomes_readable_error() -> None:
     with pytest.raises(AppError) as exc_info:
-        extract_sql("CANNOT_ANSWER: в данных нет информации о погоде")
+        extract_sql("CANNOT_ANSWER: the data has no weather information")
     assert exc_info.value.code == ErrorCode.AI_ERROR
     assert exc_info.value.status_code == 422
-    assert exc_info.value.message == "в данных нет информации о погоде"
+    assert exc_info.value.message == "the data has no weather information"
 
 
 @pytest.mark.parametrize("raw", ["", "   ", "```sql\n```"])
@@ -57,12 +57,12 @@ def test_empty_answer_is_an_error(raw: str) -> None:
 
 
 def test_prompt_contains_schema_original_names_samples_and_question() -> None:
-    prompt = build_user_prompt([SALES], "Топ городов по сумме")
+    prompt = build_user_prompt([SALES], "Top cities by amount")
     assert 'Table "sales" (2 rows)' in prompt
-    assert '"gorod" TEXT  (original name: "Город")' in prompt
+    assert '"city" TEXT  (original name: "City")' in prompt
     assert '"amount" INTEGER\n' in prompt  # no redundant original name
     assert '["Praha", 100]' in prompt
-    assert prompt.endswith("Question: Топ городов по сумме")
+    assert prompt.endswith("Question: Top cities by amount")
 
 
 def test_prompt_truncates_long_sample_values() -> None:
@@ -78,9 +78,9 @@ def test_generate_sql_sends_system_and_user_prompt_and_cleans_answer() -> None:
             return "```sql\nSELECT * FROM sales\n```"
 
     provider = Recorder()
-    assert provider.generate_sql([SALES], "всё") == "SELECT * FROM sales"
+    assert provider.generate_sql([SALES], "everything") == "SELECT * FROM sales"
     assert provider.calls[0] == SYSTEM_PROMPT
-    assert "Question: всё" in provider.calls[1]
+    assert "Question: everything" in provider.calls[1]
 
 
 # --- provider selection -----------------------------------------------------------------

@@ -29,7 +29,7 @@ def fake_ai(client: TestClient) -> Iterator[FakeAI]:
 
 def workspace_with_sales(client: TestClient) -> str:
     workspace_id = client.post("/api/workspaces").json()["workspace_id"]
-    csv = "Город,amount\nPraha,100\nBrno,250\nPraha,80\n".encode()
+    csv = b"City,Amount ($)\nPrague,100\nBrno,250\nPrague,80\n"
     response = client.post(
         f"/api/workspaces/{workspace_id}/files", files=[("files", ("sales.csv", csv, "text/csv"))]
     )
@@ -44,44 +44,45 @@ def ask(client: TestClient, workspace_id: str, question: str):
 def test_question_to_result(client: TestClient, fake_ai: FakeAI) -> None:
     workspace_id = workspace_with_sales(client)
     fake_ai.answer = (
-        "```sql\nSELECT gorod, SUM(amount) AS total FROM sales GROUP BY gorod "
+        "```sql\nSELECT city, SUM(amount) AS total FROM sales GROUP BY city "
         "ORDER BY total DESC\n```"
     )
 
-    response = ask(client, workspace_id, "  Сумма по городам  ")
+    response = ask(client, workspace_id, "  Total amount by city  ")
 
     assert response.status_code == 200
     body = response.json()
-    assert body["columns"] == ["gorod", "total"]
-    assert body["rows"] == [["Brno", 250], ["Praha", 180]]
+    assert body["columns"] == ["city", "total"]
+    assert body["rows"] == [["Brno", 250], ["Prague", 180]]
     assert body["row_count"] == 2
     assert body["truncated"] is False
     assert body["sql"].endswith("LIMIT 1000")  # the real limit, not the internal +1 probe
 
     prompt = fake_ai.prompts[0]
-    assert '(original name: "Город")' in prompt
-    assert prompt.endswith("Question: Сумма по городам")  # trimmed
+    assert '"city" TEXT  (original name: "City")' in prompt
+    assert '(original name: "Amount ($)")' in prompt
+    assert prompt.endswith("Question: Total amount by city")  # trimmed
 
 
 def test_dangerous_sql_from_ai_is_blocked(client: TestClient, fake_ai: FakeAI) -> None:
     workspace_id = workspace_with_sales(client)
     fake_ai.answer = "DROP TABLE sales"
 
-    response = ask(client, workspace_id, "удали всё")
+    response = ask(client, workspace_id, "delete everything")
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "SQL_NOT_ALLOWED"
 
     fake_ai.answer = "SELECT COUNT(*) AS n FROM sales"
-    assert ask(client, workspace_id, "сколько строк").json()["rows"] == [[3]]
+    assert ask(client, workspace_id, "how many rows").json()["rows"] == [[3]]
 
 
 def test_cannot_answer(client: TestClient, fake_ai: FakeAI) -> None:
     workspace_id = workspace_with_sales(client)
-    fake_ai.answer = "CANNOT_ANSWER: нет данных о погоде"
+    fake_ai.answer = "CANNOT_ANSWER: no weather data"
 
-    response = ask(client, workspace_id, "какая погода")
+    response = ask(client, workspace_id, "what is the weather")
     assert response.status_code == 422
-    assert response.json()["error"] == {"code": "AI_ERROR", "message": "нет данных о погоде"}
+    assert response.json()["error"] == {"code": "AI_ERROR", "message": "no weather data"}
 
 
 def test_broken_sql_from_ai(client: TestClient, fake_ai: FakeAI) -> None:
@@ -95,7 +96,7 @@ def test_broken_sql_from_ai(client: TestClient, fake_ai: FakeAI) -> None:
 
 def test_workspace_without_tables(client: TestClient, fake_ai: FakeAI) -> None:
     workspace_id = client.post("/api/workspaces").json()["workspace_id"]
-    response = ask(client, workspace_id, "что-нибудь")
+    response = ask(client, workspace_id, "anything")
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "INVALID_REQUEST"
     assert fake_ai.prompts == []  # no AI call wasted
