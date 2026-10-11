@@ -1,0 +1,28 @@
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.config import Settings, get_settings
+from app.main import app
+from app.services import workspace_service
+
+
+@pytest.fixture
+def settings(tmp_path: Path) -> Settings:
+    return Settings(data_dir=tmp_path / "data", max_upload_mb=1)
+
+
+@pytest.fixture
+def client(settings: Settings) -> Iterator[TestClient]:
+    app.dependency_overrides[get_settings] = lambda: settings
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def db_path(settings: Settings) -> Path:
+    workspace_id = workspace_service.create_workspace(settings.data_dir)
+    return workspace_service.get_db_path(settings.data_dir, workspace_id)
