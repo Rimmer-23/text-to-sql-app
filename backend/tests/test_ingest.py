@@ -28,11 +28,12 @@ def fetch_all(db_path: Path, sql: str) -> list[tuple]:
     ("raw", "expected"),
     [
         ("Sales 2024", "sales_2024"),
-        ("Продажи", "prodazhi"),
+        ("Café Sales", "cafe_sales"),
         ("2024 report", "t_2024_report"),
         ("__hidden__", "hidden"),
         ("!!!", "table"),
-        ("Отчёт: Q1/Q2", "otchiot_q1_q2"),
+        ("Report: Q1/Q2", "report_q1_q2"),
+        ("Продажи", "table"),  # non-Latin characters are dropped, not transliterated
     ],
 )
 def test_normalize_table_name(raw: str, expected: str) -> None:
@@ -40,7 +41,7 @@ def test_normalize_table_name(raw: str, expected: str) -> None:
 
 
 def test_normalize_column_name() -> None:
-    assert normalize_column_name("Сумма, руб.") == "summa_rub"
+    assert normalize_column_name("Amount, USD") == "amount_usd"
     assert normalize_column_name("1st place") == "c_1st_place"
     assert normalize_column_name("") == "column"
 
@@ -67,20 +68,28 @@ def test_utf8_comma_csv(db_path: Path) -> None:
     assert fetch_all(db_path, "SELECT city, amount FROM sales") == [("Praha", 100), ("Brno", 250)]
 
 
-def test_cp1251_semicolon_csv_with_cyrillic_names(db_path: Path) -> None:
-    text = "Город;Сумма продаж\nМосква;1500,50\nКазань;99,9\n"
-    tables = ingest_files(db_path, [csv_file("Продажи.csv", text, encoding="cp1251")])
+def test_semicolon_csv_with_decimal_comma(db_path: Path) -> None:
+    # European Excel exports: `;` delimiter and decimal comma, even with English data.
+    text = "City;Total Sales\nPrague;1500,50\nBrno;99,9\n"
+    tables = ingest_files(db_path, [csv_file("Sales Report.csv", text)])
 
     table = tables[0]
-    assert table.name == "prodazhi"
+    assert table.name == "sales_report"
     assert [(c.name, c.original_name, c.type) for c in table.columns] == [
-        ("gorod", "Город", "TEXT"),
-        ("summa_prodazh", "Сумма продаж", "REAL"),
+        ("city", "City", "TEXT"),
+        ("total_sales", "Total Sales", "REAL"),
     ]
-    assert fetch_all(db_path, "SELECT gorod, summa_prodazh FROM prodazhi") == [
-        ("Москва", 1500.5),
-        ("Казань", 99.9),
+    assert fetch_all(db_path, "SELECT city, total_sales FROM sales_report") == [
+        ("Prague", 1500.5),
+        ("Brno", 99.9),
     ]
+
+
+def test_non_utf8_file_is_rejected(db_path: Path) -> None:
+    with pytest.raises(AppError) as exc_info:
+        ingest_files(db_path, [csv_file("sales.csv", "city\nCafé\n", encoding="latin-1")])
+    assert exc_info.value.code == ErrorCode.INVALID_FILE
+    assert "UTF-8" in exc_info.value.message
 
 
 def test_utf8_bom_and_tab_delimiter(db_path: Path) -> None:
@@ -92,12 +101,12 @@ def test_utf8_bom_and_tab_delimiter(db_path: Path) -> None:
 
 
 def test_columns_meta_stores_original_names(db_path: Path) -> None:
-    ingest_files(db_path, [csv_file("people.csv", "Имя,Age (years)\nИван,30\n")])
+    ingest_files(db_path, [csv_file("people.csv", "First Name,Age (years)\nJohn,30\n")])
 
     rows = fetch_all(
         db_path, "SELECT column_name, original_name FROM _columns_meta WHERE table_name='people'"
     )
-    assert sorted(rows) == [("age_years", "Age (years)"), ("imia", "Имя")]
+    assert sorted(rows) == [("age_years", "Age (years)"), ("first_name", "First Name")]
 
 
 def test_duplicate_table_names_get_suffix(db_path: Path) -> None:
@@ -184,15 +193,15 @@ def test_bad_file_aborts_whole_upload(db_path: Path) -> None:
 
 def test_schema_hides_service_tables_and_limits_samples(db_path: Path) -> None:
     rows = "\n".join(f"{i},item{i}" for i in range(10))
-    ingest_files(db_path, [csv_file("Товары.csv", f"Номер,Название\n{rows}\n")])
+    ingest_files(db_path, [csv_file("Products.csv", f"ID,Product Name\n{rows}\n")])
 
     schema = get_schema(db_path)
 
-    assert [t.name for t in schema] == ["tovary"]
+    assert [t.name for t in schema] == ["products"]
     table = schema[0]
     assert table.row_count == 10
     assert [(c.name, c.original_name) for c in table.columns] == [
-        ("nomer", "Номер"),
-        ("nazvanie", "Название"),
+        ("id", "ID"),
+        ("product_name", "Product Name"),
     ]
     assert table.sample_rows == [[0, "item0"], [1, "item1"], [2, "item2"]]

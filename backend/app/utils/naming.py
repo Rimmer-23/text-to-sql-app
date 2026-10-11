@@ -1,7 +1,6 @@
 import re
+import unicodedata
 from collections.abc import Iterable
-
-from unidecode import unidecode
 
 MAX_IDENTIFIER_LENGTH = 63
 
@@ -9,9 +8,11 @@ MAX_IDENTIFIER_LENGTH = 63
 def normalize_identifier(name: str, fallback: str, digit_prefix: str) -> str:
     """Latin letters, digits and `_`, lower case, never starts with a digit or `_`.
 
-    Leading `_` is reserved for service tables (e.g. `_columns_meta`).
+    Data is English-only: accents are dropped (`Café` -> `cafe`), other non-Latin
+    characters are removed. Leading `_` is reserved for service tables (`_columns_meta`).
     """
-    ascii_name = unidecode(str(name)).lower()
+    decomposed = unicodedata.normalize("NFKD", str(name))
+    ascii_name = decomposed.encode("ascii", "ignore").decode().lower()
     result = re.sub(r"[^a-z0-9]+", "_", ascii_name).strip("_")
     if not result:
         result = fallback

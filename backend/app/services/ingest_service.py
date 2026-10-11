@@ -11,7 +11,7 @@ from app.services.workspace_service import COLUMNS_META_TABLE
 from app.utils.naming import make_unique, normalize_column_name, normalize_table_name
 
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls"}
-CSV_ENCODINGS = ("utf-8-sig", "cp1251")
+CSV_ENCODING = "utf-8-sig"  # also accepts plain UTF-8 without a BOM
 CSV_DELIMITERS = ",;\t|"
 SNIFF_SAMPLE_CHARS = 64 * 1024
 
@@ -109,12 +109,12 @@ def parse_file(file: UploadedFile) -> list[ParsedSheet]:
 
 
 def _decode(file: UploadedFile) -> str:
-    for encoding in CSV_ENCODINGS:
-        try:
-            return file.content.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    raise AppError(ErrorCode.INVALID_FILE, f"'{file.filename}': unknown text encoding")
+    try:
+        return file.content.decode(CSV_ENCODING)
+    except UnicodeDecodeError as exc:
+        raise AppError(
+            ErrorCode.INVALID_FILE, f"'{file.filename}': file must be UTF-8 encoded"
+        ) from exc
 
 
 def _detect_delimiter(text: str) -> str:

@@ -20,19 +20,19 @@ def test_upload_and_schema(client: TestClient) -> None:
         f"/api/workspaces/{workspace_id}/files",
         files=[
             ("files", ("sales.csv", b"city,amount\nPraha,100\nBrno,250\n", "text/csv")),
-            ("files", ("Клиенты.csv", "Имя;Город\nИван;Praha\n".encode(), "text/csv")),
+            ("files", ("Customers.csv", b"Name;City\nJohn;Prague\n", "text/csv")),
         ],
     )
     assert response.status_code == 200
     uploaded = response.json()["tables"]
     assert [(t["name"], t["source_file"], t["row_count"]) for t in uploaded] == [
         ("sales", "sales.csv", 2),
-        ("klienty", "Клиенты.csv", 1),
+        ("customers", "Customers.csv", 1),
     ]
 
     schema = client.get(f"/api/workspaces/{workspace_id}/schema").json()
     assert schema["workspace_id"] == workspace_id
-    assert [t["name"] for t in schema["tables"]] == ["klienty", "sales"]
+    assert [t["name"] for t in schema["tables"]] == ["customers", "sales"]
     sales = schema["tables"][1]
     assert sales["columns"] == [
         {"name": "city", "original_name": "city", "type": "TEXT"},
