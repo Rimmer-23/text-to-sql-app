@@ -1,6 +1,6 @@
 """Execute AI-generated SQL against a workspace database, safely.
 
-Two independent layers of defense, per CLAUDE.md:
+Two independent layers of defense:
 1. `sql_guard` only lets a single read-only SELECT through, with a row limit enforced.
 2. The connection itself is opened read-only (SQLite URI `mode=ro`), so even a guard bug
    can't turn into a write.

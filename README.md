@@ -57,5 +57,3 @@ Never commit `.env`: it holds your key, and it is in `.gitignore`.
 
 [`sample-data/`](sample-data/) has three related CSV files and 12 questions with known answers.
 Upload all three files at once, then compare the app's answers with the table in its README.
-
-Architecture details are in [CLAUDE.md](CLAUDE.md).
