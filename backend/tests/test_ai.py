@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
+from google.genai import errors as genai_errors
 
 from app.ai.base import AIProvider, extract_sql
 from app.ai.factory import _build_provider
@@ -128,7 +129,7 @@ def test_gemini_passes_model_prompts_and_zero_temperature() -> None:
     assert calls["config"].temperature == 0
 
 
-def test_gemini_failure_becomes_ai_error() -> None:
+def test_gemini_network_failure_becomes_ai_error() -> None:
     def generate_content(**_):
         raise ConnectionError("network down")
 
@@ -136,7 +137,51 @@ def test_gemini_failure_becomes_ai_error() -> None:
         _gemini_with(generate_content).complete("s", "u")
     assert exc_info.value.code == ErrorCode.AI_ERROR
     assert exc_info.value.status_code == 502
-    assert "network down" in exc_info.value.message
+    assert "Could not reach the AI service (ConnectionError)" in exc_info.value.message
+
+
+def _api_error(code: int, status: str, message: str) -> genai_errors.APIError:
+    return genai_errors.APIError(
+        code, {"error": {"code": code, "status": status, "message": message}}
+    )
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (_api_error(503, "UNAVAILABLE", "high demand"), "overloaded right now"),
+        (_api_error(429, "RESOURCE_EXHAUSTED", "quota"), "rate limit or quota"),
+        (
+            _api_error(400, "INVALID_ARGUMENT", "API key not valid. Please pass a valid API key."),
+            "rejected the API key",
+        ),
+        (_api_error(403, "PERMISSION_DENIED", "denied"), "rejected the API key"),
+        (_api_error(404, "NOT_FOUND", "models/x is not found"), "'some-model' was not found"),
+        (_api_error(500, "INTERNAL", "oops"), "Gemini returned an error (500 INTERNAL): oops"),
+    ],
+)
+def test_gemini_api_errors_are_explained(error: genai_errors.APIError, expected: str) -> None:
+    def generate_content(**_):
+        raise error
+
+    with pytest.raises(AppError) as exc_info:
+        _gemini_with(generate_content).complete("s", "u")
+    assert exc_info.value.code == ErrorCode.AI_ERROR
+    assert expected in exc_info.value.message
+
+
+def test_gemini_retries_transient_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured = {}
+    monkeypatch.setattr(
+        "app.ai.gemini.genai.Client", lambda **kwargs: captured.update(kwargs) or object()
+    )
+    GeminiProvider(api_key="k", model="m", timeout_seconds=30)
+
+    options = captured["http_options"]
+    assert options.timeout == 30_000
+    assert options.retry_options.attempts == 3
+    assert 503 in options.retry_options.http_status_codes
+    assert 429 not in options.retry_options.http_status_codes  # quota errors don't heal in seconds
 
 
 def test_gemini_empty_response_becomes_ai_error() -> None:
