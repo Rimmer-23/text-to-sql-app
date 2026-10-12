@@ -55,6 +55,7 @@ export type ErrorCode =
   | "AI_ERROR"
   | "WORKSPACE_NOT_FOUND"
   | "TABLE_NOT_FOUND"
+  | "INTERNAL_ERROR"
   // Client-side only: the request never got a well-formed answer from the backend.
   | "NETWORK_ERROR"
   | "UNKNOWN_ERROR";

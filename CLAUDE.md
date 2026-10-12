@@ -121,7 +121,8 @@ text-to-sql/
 Ошибки — единый формат: `{ "error": { "code": "...", "message": "..." } }`.
 Для `SQL_NOT_ALLOWED` и `SQL_EXECUTION_ERROR` в `/query` добавляется `"sql"` — что сгенерировал AI.
 Коды: `INVALID_FILE`, `INVALID_REQUEST`, `SQL_NOT_ALLOWED`, `SQL_EXECUTION_ERROR`, `AI_ERROR`,
-`WORKSPACE_NOT_FOUND`, `TABLE_NOT_FOUND`.
+`WORKSPACE_NOT_FOUND`, `TABLE_NOT_FOUND`, `INTERNAL_ERROR` (необработанное исключение: 500 в том же
+формате, traceback — в терминале бэкенда).
 
 ## Загрузка файлов (ingest)
 

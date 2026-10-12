@@ -90,7 +90,17 @@ function describeError(error: ApiError): ErrorCopy {
       return { title: "Can't reach the server", detail: error.message };
     case "INVALID_REQUEST":
       return { title: "Can't ask this question", detail: error.message };
+    case "INTERNAL_ERROR":
+      return { title: "The server hit an unexpected error", detail: error.message };
     default:
+      // A 5xx without our error format: the backend crashed before it could answer properly.
+      if (error.status >= 500) {
+        return {
+          title: "The server hit an unexpected error",
+          detail: error.message,
+          hint: "Details are in the terminal where the backend runs.",
+        };
+      }
       return { title: "Something went wrong", detail: error.message };
   }
 }

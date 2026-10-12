@@ -200,4 +200,13 @@ describe("asking questions", () => {
       "The AI service didn't answerAI_API_KEY is not set in backend/.env",
     );
   });
+
+  it("points to the backend terminal when the server crashes", async () => {
+    await renderWithData(() => ({ status: 500, body: "Internal Server Error" }));
+    await ask("how many customers live in prague?");
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("The server hit an unexpected error");
+    expect(alert).toHaveTextContent("Details are in the terminal where the backend runs.");
+  });
 });

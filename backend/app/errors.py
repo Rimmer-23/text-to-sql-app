@@ -13,6 +13,7 @@ class ErrorCode(StrEnum):
     AI_ERROR = "AI_ERROR"
     WORKSPACE_NOT_FOUND = "WORKSPACE_NOT_FOUND"
     TABLE_NOT_FOUND = "TABLE_NOT_FOUND"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
 
 
 class AppError(Exception):
@@ -45,3 +46,14 @@ def register_error_handlers(app: FastAPI) -> None:
             f"{'.'.join(str(part) for part in err['loc'])}: {err['msg']}" for err in exc.errors()
         )
         return _error_response(ErrorCode.INVALID_REQUEST, details, 422)
+
+    @app.exception_handler(Exception)
+    async def handle_unexpected_error(_: Request, exc: Exception) -> JSONResponse:
+        # Keeps the error format even for bugs. Starlette still re-raises the exception after
+        # this response, so the full traceback lands in the backend terminal.
+        return _error_response(
+            ErrorCode.INTERNAL_ERROR,
+            f"Unexpected server error ({type(exc).__name__}). "
+            "Details are in the terminal where the backend runs.",
+            500,
+        )

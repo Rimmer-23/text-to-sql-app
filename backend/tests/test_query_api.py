@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.ai.base import AIProvider
 from app.ai.factory import get_ai_provider
+from app.config import get_settings
 from app.main import app
 
 
@@ -129,3 +130,42 @@ def test_ai_not_configured(client: TestClient) -> None:
     assert response.status_code == 500
     assert response.json()["error"]["code"] == "AI_ERROR"
     assert "AI_API_KEY" in response.json()["error"]["message"]
+
+
+def test_missing_gemini_sdk_is_explained(client: TestClient, settings, monkeypatch) -> None:
+    import sys
+
+    from app.ai.factory import _build_provider
+
+    _build_provider.cache_clear()
+    monkeypatch.setitem(sys.modules, "app.ai.gemini", None)  # makes the import fail
+    settings.ai_api_key, settings.ai_model = "key", "some-model"
+    workspace_id = workspace_with_sales(client)
+
+    response = ask(client, workspace_id, "q")
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "AI_ERROR"
+    assert "pip install -r requirements.txt" in response.json()["error"]["message"]
+    _build_provider.cache_clear()
+
+
+def test_unexpected_errors_keep_the_error_format(settings) -> None:
+    class BrokenAI(AIProvider):
+        def complete(self, system_prompt: str, user_prompt: str) -> str:
+            raise RuntimeError("boom")
+
+    app.dependency_overrides[get_settings] = lambda: settings
+    app.dependency_overrides[get_ai_provider] = BrokenAI
+    try:
+        # raise_server_exceptions=False: see the response a browser gets, not the re-raise.
+        with TestClient(app, raise_server_exceptions=False) as client:
+            workspace_id = workspace_with_sales(client)
+            response = ask(client, workspace_id, "q")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 500
+    error = response.json()["error"]
+    assert error["code"] == "INTERNAL_ERROR"
+    assert "RuntimeError" in error["message"]
+    assert "boom" not in error["message"]  # internals stay in the server log

@@ -38,6 +38,13 @@ def _build_provider(name: str, model: str, api_key: str, timeout_seconds: float)
         raise AppError(ErrorCode.AI_ERROR, "AI_MODEL is not set in backend/.env", 500)
 
     # Imported here so the SDK only loads for the provider actually in use.
-    from app.ai.gemini import GeminiProvider
+    try:
+        from app.ai.gemini import GeminiProvider
+    except ImportError as exc:
+        raise AppError(
+            ErrorCode.AI_ERROR,
+            "The Gemini SDK is not installed. In backend/, run: pip install -r requirements.txt",
+            500,
+        ) from exc
 
     return GeminiProvider(api_key=api_key, model=model, timeout_seconds=timeout_seconds)
