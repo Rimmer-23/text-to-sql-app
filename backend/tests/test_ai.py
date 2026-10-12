@@ -170,16 +170,19 @@ def test_gemini_api_errors_are_explained(error: genai_errors.APIError, expected:
     assert expected in exc_info.value.message
 
 
-def test_gemini_retries_transient_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(("max_attempts", "expected"), [(2, 2), (1, 1), (0, 1)])
+def test_gemini_retries_transient_errors(
+    monkeypatch: pytest.MonkeyPatch, max_attempts: int, expected: int
+) -> None:
     captured = {}
     monkeypatch.setattr(
         "app.ai.gemini.genai.Client", lambda **kwargs: captured.update(kwargs) or object()
     )
-    GeminiProvider(api_key="k", model="m", timeout_seconds=30)
+    GeminiProvider(api_key="k", model="m", timeout_seconds=30, max_attempts=max_attempts)
 
     options = captured["http_options"]
     assert options.timeout == 30_000
-    assert options.retry_options.attempts == 3
+    assert options.retry_options.attempts == expected
     assert 503 in options.retry_options.http_status_codes
     assert 429 not in options.retry_options.http_status_codes  # quota errors don't heal in seconds
 

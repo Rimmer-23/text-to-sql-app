@@ -21,11 +21,14 @@ def get_ai_provider(settings: Settings = Depends(get_settings)) -> AIProvider:
         settings.ai_model.strip(),
         settings.ai_api_key.strip(),
         settings.ai_timeout_seconds,
+        settings.ai_max_attempts,
     )
 
 
 @lru_cache(maxsize=4)  # one client per configuration, not per request
-def _build_provider(name: str, model: str, api_key: str, timeout_seconds: float) -> AIProvider:
+def _build_provider(
+    name: str, model: str, api_key: str, timeout_seconds: float, max_attempts: int = 2
+) -> AIProvider:
     if name not in SUPPORTED_PROVIDERS:
         raise AppError(
             ErrorCode.AI_ERROR,
@@ -47,4 +50,6 @@ def _build_provider(name: str, model: str, api_key: str, timeout_seconds: float)
             500,
         ) from exc
 
-    return GeminiProvider(api_key=api_key, model=model, timeout_seconds=timeout_seconds)
+    return GeminiProvider(
+        api_key=api_key, model=model, timeout_seconds=timeout_seconds, max_attempts=max_attempts
+    )

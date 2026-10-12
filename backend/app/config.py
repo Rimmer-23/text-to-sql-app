@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     ai_model: str = ""
     ai_api_key: str = ""
     ai_timeout_seconds: float = 30
+    # Attempts per AI request, including the first; 1 disables retries. Kept low because
+    # failed requests count toward the provider's quota (Gemini free tier: 20 a day).
+    ai_max_attempts: int = 2
 
     data_dir: Path = Path("./data")
     max_upload_mb: int = 50

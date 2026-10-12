@@ -7,20 +7,26 @@ from google.genai import types
 from app.ai.base import AIProvider
 from app.errors import AppError, ErrorCode
 
-# Overload and server errors are usually gone within seconds; the SDK retries them with
-# exponential backoff (about 1 s, then 2 s) before we give up and tell the user.
-_RETRY = types.HttpRetryOptions(
-    attempts=3, initial_delay=1.0, max_delay=8.0, http_status_codes=[500, 502, 503, 504]
-)
+# Overload and server errors are usually gone within seconds, so the SDK retries them with
+# exponential backoff. 429 is not retried: quota errors don't clear in seconds.
+_RETRYABLE_STATUS_CODES = [500, 502, 503, 504]
 
 
 class GeminiProvider(AIProvider):
-    def __init__(self, api_key: str, model: str, timeout_seconds: float) -> None:
+    def __init__(
+        self, api_key: str, model: str, timeout_seconds: float, max_attempts: int = 2
+    ) -> None:
         self._model = model
+        retry = types.HttpRetryOptions(
+            attempts=max(1, max_attempts),
+            initial_delay=2.0,
+            max_delay=8.0,
+            http_status_codes=_RETRYABLE_STATUS_CODES,
+        )
         self._client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=int(timeout_seconds * 1000), retry_options=_RETRY
+                timeout=int(timeout_seconds * 1000), retry_options=retry
             ),
         )
 
