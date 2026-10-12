@@ -176,3 +176,7 @@ Backend tests use a fake AI provider and ignore `.env`, so they never call a rea
 - **Small to medium data.** SQLite is plenty for files up to the upload limit; larger data
   would call for DuckDB or PostgreSQL.
 - **Model mistakes are possible.** The SQL is always shown so an answer can be checked.
+
+## License
+
+[MIT](LICENSE)
