@@ -109,7 +109,7 @@ def parse_file(file: UploadedFile) -> list[ParsedSheet]:
             f"'{file.filename}': unsupported file type, expected .csv, .xlsx or .xls",
         )
     if extension != ".csv":
-        # TODO(step 7): Excel support, one table per sheet.
+        # TODO: Excel support, one table per sheet.
         raise AppError(ErrorCode.INVALID_FILE, f"'{file.filename}': Excel is not supported yet")
 
     frame = _read_csv(file)

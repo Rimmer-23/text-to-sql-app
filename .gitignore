@@ -23,5 +23,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Local instructions for Claude Code, not published
+# Local notes, not published
 CLAUDE.md
