@@ -1,0 +1,41 @@
+Customer ID,Name,Email,City,Country,Signed Up
+1,Tomas Novak,tomas.novak@example.com,Brno,Czech Republic,2024-09-07
+2,Jakub Dvorak,jakub.dvorak@example.com,Prague,Czech Republic,2025-07-12
+3,Jana Fischer,jana.fischer@example.com,Munich,Germany,2024-02-02
+4,Anna Svoboda,anna.svoboda@example.com,Brno,Czech Republic,2024-08-26
+5,Klara Fischer,klara.fischer@example.com,Prague,Czech Republic,2025-07-28
+6,Lucie Bauer,lucie.bauer@example.com,Munich,Germany,2024-08-13
+7,Marta Fischer,marta.fischer@example.com,Brno,Czech Republic,2024-01-07
+8,Martin Bauer,martin.bauer@example.com,Munich,Germany,2024-12-14
+9,Katerina Dvorak,katerina.dvorak@example.com,Brno,Czech Republic,2024-12-10
+10,Tomas Svoboda,tomas.svoboda@example.com,Berlin,Germany,2024-04-09
+11,Lukas Pokorny,lukas.pokorny@example.com,Vienna,Austria,2024-09-27
+12,Petr Bauer,petr.bauer@example.com,Bratislava,Slovakia,2025-07-03
+13,Tomas Hajek,tomas.hajek@example.com,Berlin,Germany,2024-03-21
+14,Ondrej Prochazka,ondrej.prochazka@example.com,Vienna,Austria,2025-08-14
+15,Jana Novak,jana.novak@example.com,Brno,Czech Republic,2024-10-23
+16,Jana Pokorny,jana.pokorny@example.com,Brno,Czech Republic,2024-04-13
+17,Sophie Prochazka,sophie.prochazka@example.com,Bratislava,Slovakia,2025-01-08
+18,Martin Kucera,martin.kucera@example.com,Vienna,Austria,2024-08-02
+19,Katerina Bauer,katerina.bauer@example.com,Prague,Czech Republic,2024-06-24
+20,Ondrej Bauer,ondrej.bauer@example.com,Brno,Czech Republic,2024-06-16
+21,Marta Vesely,marta.vesely@example.com,Brno,Czech Republic,2025-07-24
+22,Jakub Kowalski,jakub.kowalski@example.com,Plzen,Czech Republic,2024-02-27
+23,Jakub Pokorny,jakub.pokorny@example.com,Prague,Czech Republic,2024-11-19
+24,Jana Cerny,jana.cerny@example.com,Plzen,Czech Republic,2024-08-05
+25,Pavel Vesely,pavel.vesely@example.com,Bratislava,Slovakia,2024-05-26
+26,Jakub Bauer,jakub.bauer@example.com,Brno,Czech Republic,2025-08-21
+27,Felix Hajek,felix.hajek@example.com,Berlin,Germany,2025-01-05
+28,Klara Horak,klara.horak@example.com,Prague,Czech Republic,2024-02-18
+29,Tomas Dvorak,tomas.dvorak@example.com,Prague,Czech Republic,2025-03-08
+30,Jan Svoboda,jan.svoboda@example.com,Berlin,Germany,2025-01-25
+31,Jan Horak,jan.horak@example.com,Brno,Czech Republic,2025-07-20
+32,Anna Kowalski,anna.kowalski@example.com,Prague,Czech Republic,2025-07-03
+33,Katerina Marek,katerina.marek@example.com,Plzen,Czech Republic,2024-04-24
+34,David Vesely,david.vesely@example.com,Prague,Czech Republic,2025-04-09
+35,Anna Bauer,anna.bauer@example.com,Brno,Czech Republic,2025-05-27
+36,Martin Weber,martin.weber@example.com,Prague,Czech Republic,2024-11-01
+37,Lucie Dvorak,lucie.dvorak@example.com,Vienna,Austria,2024-06-14
+38,Ondrej Marek,ondrej.marek@example.com,Prague,Czech Republic,2024-11-27
+39,Pavel Novak,pavel.novak@example.com,Prague,Czech Republic,2025-01-06
+40,David Cerny,david.cerny@example.com,Prague,Czech Republic,2024-09-03
