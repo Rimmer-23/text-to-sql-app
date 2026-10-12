@@ -10,6 +10,7 @@ class HealthResponse(BaseModel):
 class ErrorDetail(BaseModel):
     code: str
     message: str
+    sql: str | None = None  # only for SQL_NOT_ALLOWED / SQL_EXECUTION_ERROR
 
 
 class ErrorResponse(BaseModel):

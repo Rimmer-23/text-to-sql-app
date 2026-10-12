@@ -60,5 +60,6 @@ export type ErrorCode =
   | "UNKNOWN_ERROR";
 
 export interface ErrorResponse {
-  error: { code: ErrorCode; message: string };
+  // `sql` is set for SQL_NOT_ALLOWED and SQL_EXECUTION_ERROR from /query.
+  error: { code: ErrorCode; message: string; sql?: string };
 }

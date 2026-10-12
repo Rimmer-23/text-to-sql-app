@@ -21,19 +21,23 @@ class AppError(Exception):
         self.code = code
         self.message = message
         self.status_code = status_code
+        # The SQL the AI generated, when the error is about that SQL, so the user can see it.
+        self.sql: str | None = None
 
 
-def _error_response(code: str, message: str, status_code: int) -> JSONResponse:
-    return JSONResponse(
-        status_code=status_code,
-        content={"error": {"code": code, "message": message}},
-    )
+def _error_response(
+    code: str, message: str, status_code: int, sql: str | None = None
+) -> JSONResponse:
+    error: dict[str, str] = {"code": code, "message": message}
+    if sql is not None:
+        error["sql"] = sql
+    return JSONResponse(status_code=status_code, content={"error": error})
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def handle_app_error(_: Request, exc: AppError) -> JSONResponse:
-        return _error_response(exc.code, exc.message, exc.status_code)
+        return _error_response(exc.code, exc.message, exc.status_code, exc.sql)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:

@@ -57,6 +57,7 @@ def test_question_to_result(client: TestClient, fake_ai: FakeAI) -> None:
     assert body["row_count"] == 2
     assert body["truncated"] is False
     assert body["sql"].endswith("LIMIT 1000")  # the real limit, not the internal +1 probe
+    assert body["sql"].startswith("SELECT\n")  # laid out on lines for reading
 
     prompt = fake_ai.prompts[0]
     assert '"city" TEXT  (original name: "City")' in prompt
@@ -71,6 +72,7 @@ def test_dangerous_sql_from_ai_is_blocked(client: TestClient, fake_ai: FakeAI) -
     response = ask(client, workspace_id, "delete everything")
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "SQL_NOT_ALLOWED"
+    assert response.json()["error"]["sql"] == "DROP TABLE sales"
 
     fake_ai.answer = "SELECT COUNT(*) AS n FROM sales"
     assert ask(client, workspace_id, "how many rows").json()["rows"] == [[3]]
@@ -92,6 +94,7 @@ def test_broken_sql_from_ai(client: TestClient, fake_ai: FakeAI) -> None:
     response = ask(client, workspace_id, "?")
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "SQL_EXECUTION_ERROR"
+    assert response.json()["error"]["sql"] == "SELECT no_such_column FROM sales"
 
 
 def test_workspace_without_tables(client: TestClient, fake_ai: FakeAI) -> None:
@@ -106,6 +109,7 @@ def test_unknown_workspace(client: TestClient, fake_ai: FakeAI) -> None:
     response = ask(client, "00000000-0000-0000-0000-000000000000", "q")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "WORKSPACE_NOT_FOUND"
+    assert "sql" not in response.json()["error"]  # only errors about generated SQL carry it
 
 
 @pytest.mark.parametrize(

@@ -1,3 +1,5 @@
+import { columnFormats, formatCell } from "../tableData";
+import type { ColumnFormat } from "../tableData";
 import type { CellValue } from "../types";
 
 export interface DataColumn {
@@ -10,11 +12,17 @@ interface DataTableProps {
   columns: DataColumn[];
   rows: CellValue[][];
   caption?: string;
+  /** Per-column number formatting. Defaults to deciding from `rows`. */
+  formats?: ColumnFormat[];
 }
 
-/** Rows in alternating bands, like green-bar printout paper. Numbers align right. */
-export function DataTable({ columns, rows, caption }: DataTableProps) {
-  const numeric = columns.map((_, index) => isNumericColumn(rows, index));
+/**
+ * Rows in alternating bands, like green-bar printout paper. Numbers align right with the same
+ * number of decimals per column. The table is as wide as its content and scrolls sideways
+ * when that is wider than the page.
+ */
+export function DataTable({ columns, rows, caption, formats: formatsProp }: DataTableProps) {
+  const formats = formatsProp ?? columnFormats(rows, columns.length);
 
   return (
     <div className="data-table-scroll" tabIndex={0} role="region" aria-label={caption}>
@@ -23,7 +31,7 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
         <thead>
           <tr>
             {columns.map((column, index) => (
-              <th key={index} scope="col" data-numeric={numeric[index] || undefined}>
+              <th key={index} scope="col" data-numeric={formats[index]?.numeric || undefined}>
                 <span className="data-table-label">{column.label}</span>
                 {column.detail && <span className="data-table-detail">{column.detail}</span>}
               </th>
@@ -34,8 +42,8 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((_, index) => (
-                <td key={index} data-numeric={numeric[index] || undefined}>
-                  <Cell value={row[index] ?? null} />
+                <td key={index} data-numeric={formats[index]?.numeric || undefined}>
+                  <Cell value={row[index] ?? null} format={formats[index]} />
                 </td>
               ))}
             </tr>
@@ -46,7 +54,7 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
   );
 }
 
-function Cell({ value }: { value: CellValue }) {
+function Cell({ value, format }: { value: CellValue; format: ColumnFormat | undefined }) {
   if (value === null) {
     return (
       <span className="data-table-null" title="Empty">
@@ -54,16 +62,5 @@ function Cell({ value }: { value: CellValue }) {
       </span>
     );
   }
-  return <>{String(value)}</>;
-}
-
-function isNumericColumn(rows: CellValue[][], index: number): boolean {
-  let sawNumber = false;
-  for (const row of rows) {
-    const value = row[index];
-    if (value === null || value === undefined) continue;
-    if (typeof value !== "number") return false;
-    sawNumber = true;
-  }
-  return sawNumber;
+  return <>{formatCell(value, format)}</>;
 }

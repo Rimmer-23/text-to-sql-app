@@ -76,21 +76,24 @@ text-to-sql/
         ├── App.tsx             # раскладка: слева данные, справа превью / результат
         ├── styles.css          # токены (цвета, шрифты) + стили, светлая и тёмная тема
         ├── format.ts           # plural() и прочие форматтеры
+        ├── tableData.ts        # форматы колонок: числа вправо, одинаковое число знаков
         ├── api/
         │   └── client.ts       # все вызовы бэкенда; ошибки → ApiError(code, message)
         ├── types/
         │   └── index.ts        # типы ответов API (зеркало models/schemas.py)
         ├── hooks/
-        │   └── useWorkspace.ts # workspace_id в localStorage, загрузка схемы, upload/remove
+        │   ├── useWorkspace.ts # workspace_id в localStorage, загрузка схемы, upload/remove
+        │   └── useQuery.ts     # вопрос → ответ; хранит только ответ на последний вопрос
         ├── test/               # setup для vitest и mockFetch
         └── components/
             ├── FileUpload.tsx  # drag&drop, несколько файлов сразу
             ├── TableList.tsx   # список таблиц, удаление с подтверждением
             ├── TablePreview.tsx # колонки и первые строки выбранной таблицы
             ├── DataTable.tsx   # общая таблица «green-bar»: превью и результаты запросов
-            ├── QueryInput.tsx  # поле ввода вопроса (шаг 6)
-            ├── SqlPreview.tsx  # показывает сгенерированный SQL (шаг 6)
-            └── ResultTable.tsx # результат запроса на основе DataTable (шаг 6)
+            ├── QueryInput.tsx  # поле вопроса: Enter — спросить, Shift+Enter — новая строка
+            ├── QueryResult.tsx # вопрос + результат / понятная ошибка по коду
+            ├── SqlPreview.tsx  # сгенерированный SQL, свёрнут (раскрыт, если запрос упал)
+            └── ResultTable.tsx # результат на основе DataTable, пагинация по 50 строк
 ```
 
 ## API
@@ -115,7 +118,8 @@ text-to-sql/
 }
 ```
 
-Ошибки — единый формат: `{ "error": { "code": "...", "message": "..." } }`
+Ошибки — единый формат: `{ "error": { "code": "...", "message": "..." } }`.
+Для `SQL_NOT_ALLOWED` и `SQL_EXECUTION_ERROR` в `/query` добавляется `"sql"` — что сгенерировал AI.
 Коды: `INVALID_FILE`, `INVALID_REQUEST`, `SQL_NOT_ALLOWED`, `SQL_EXECUTION_ERROR`, `AI_ERROR`,
 `WORKSPACE_NOT_FOUND`, `TABLE_NOT_FOUND`.
 

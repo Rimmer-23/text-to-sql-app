@@ -38,6 +38,8 @@ export interface Workspace {
   /** Uploads files, creating the workspace on first use. Returns the new table names. */
   upload: (files: File[]) => Promise<string[]>;
   removeTable: (name: string) => Promise<void>;
+  /** Drop the remembered workspace, e.g. after the server reported it missing. */
+  forget: () => void;
 }
 
 export function useWorkspace(): Workspace {
@@ -116,5 +118,5 @@ export function useWorkspace(): Workspace {
     [workspaceId],
   );
 
-  return { workspaceId, tables, loading, loadError, upload, removeTable };
+  return { workspaceId, tables, loading, loadError, upload, removeTable, forget: forgetWorkspace };
 }

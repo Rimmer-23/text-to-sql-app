@@ -129,6 +129,9 @@ button {
 }
 
 .main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
   padding: 2rem 2.5rem;
   min-width: 0;
 }
@@ -322,6 +325,8 @@ button {
 }
 
 .data-table-scroll {
+  width: fit-content;
+  min-width: min(100%, 24rem);
   max-width: 100%;
   overflow-x: auto;
   border-top: 2px solid var(--ink);
@@ -330,6 +335,7 @@ button {
 
 .data-table {
   width: 100%;
+  min-width: max-content;
   border-collapse: collapse;
   font-family: var(--font-data);
   font-size: 0.875rem;
@@ -375,6 +381,171 @@ button {
   color: var(--ink-muted);
 }
 
+/* --- question ---------------------------------------------------------------------------- */
+
+.ask {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  max-width: 52rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-zone);
+  background: var(--paper);
+}
+
+.ask:focus-within {
+  border-color: var(--accent);
+}
+
+.ask-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.5rem;
+  max-height: 12rem;
+  padding: 0.5rem 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  resize: none;
+  field-sizing: content; /* grows with the question where supported */
+}
+
+.ask-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.ask-input:disabled {
+  cursor: not-allowed;
+}
+
+.ask-button {
+  flex-shrink: 0;
+}
+
+/* --- result ------------------------------------------------------------------------------ */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 52rem;
+}
+
+.result-question {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.result-meta,
+.result-note,
+.result-empty,
+.pager-position {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.result[aria-busy="true"] .result-meta {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.result-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.link-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  text-decoration: none;
+}
+
+.sql {
+  max-width: 52rem;
+  font-size: 0.875rem;
+}
+
+.sql-summary {
+  width: fit-content;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.sql-summary:hover {
+  color: var(--ink);
+}
+
+.sql-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--rule);
+  background: var(--surface);
+}
+
+.sql-code {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.query-error {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 52rem;
+  padding: 0.25rem 0 0.25rem 1rem;
+  border-left: 3px solid var(--danger);
+}
+
+.query-error-title {
+  font-weight: 600;
+}
+
+.query-error-detail {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.query-error-hint {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
 /* --- empty state ------------------------------------------------------------------------- */
 
 .empty-state {
@@ -382,7 +553,7 @@ button {
   flex-direction: column;
   gap: 0.5rem;
   max-width: 34rem;
-  padding-top: 3rem;
+  padding-top: 1rem;
 }
 
 .empty-state-title {
@@ -399,5 +570,6 @@ button {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+    animation: none !important;
   }
 }

@@ -36,7 +36,7 @@ _FORBIDDEN_NODE_TYPES: tuple[type[exp.Expression], ...] = (
 class PreparedQuery:
     # Executed: carries the probe limit (one row more than displayed, see _resolve_limits).
     sql: str
-    # Shown to the user: the same query with the limit they actually get.
+    # Shown to the user: the same query with the limit they actually get, laid out on lines.
     display_sql: str
     # Rows beyond this count were cut off by our policy limit, not asked for by the query
     # itself, so the caller should report them as truncated.
@@ -82,7 +82,7 @@ def validate_and_prepare(sql: str, max_rows: int) -> PreparedQuery:
     display_limit, probe_limit = _resolve_limits(statement, max_rows)
     return PreparedQuery(
         sql=statement.limit(probe_limit).sql(dialect="sqlite"),
-        display_sql=statement.limit(display_limit).sql(dialect="sqlite"),
+        display_sql=statement.limit(display_limit).sql(dialect="sqlite", pretty=True),
         display_limit=display_limit,
     )
 

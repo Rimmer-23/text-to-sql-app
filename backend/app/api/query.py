@@ -27,10 +27,14 @@ def ask_question(
         )
 
     sql = ai.generate_sql(tables, request.question)
-    result = query_service.run_query(
-        db_path,
-        sql,
-        max_rows=settings.max_result_rows,
-        timeout_seconds=settings.query_timeout_seconds,
-    )
+    try:
+        result = query_service.run_query(
+            db_path,
+            sql,
+            max_rows=settings.max_result_rows,
+            timeout_seconds=settings.query_timeout_seconds,
+        )
+    except AppError as exc:
+        exc.sql = sql  # show the user what the AI wrote when it is blocked or fails
+        raise
     return QueryResponse.model_validate(asdict(result))

@@ -10,12 +10,15 @@ import type {
 export class ApiError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
+  /** The SQL the AI generated, when the error is about that SQL. */
+  readonly sql?: string;
 
-  constructor(code: ErrorCode, message: string, status: number) {
+  constructor(code: ErrorCode, message: string, status: number, sql?: string) {
     super(message);
     this.name = "ApiError";
     this.code = code;
     this.status = status;
+    this.sql = sql;
   }
 }
 
@@ -44,7 +47,7 @@ async function toApiError(response: Response): Promise<ApiError> {
   try {
     const body = (await response.json()) as Partial<ErrorResponse>;
     if (body.error?.code && body.error.message) {
-      return new ApiError(body.error.code, body.error.message, response.status);
+      return new ApiError(body.error.code, body.error.message, response.status, body.error.sql);
     }
   } catch {
     // Not our JSON error format (e.g. a proxy error page); fall through to a generic error.
