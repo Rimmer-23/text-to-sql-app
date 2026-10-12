@@ -13,15 +13,7 @@ SQLite runs it read-only, and the answer comes back as a table.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    U[Browser<br/>React] -->|question| API[FastAPI]
-    API -->|schema + 3 sample rows per table<br/>+ question| LLM[Gemini]
-    LLM -->|SQL| G[sql_guard<br/>sqlglot]
-    G -->|single read-only SELECT<br/>with a row limit| DB[(SQLite<br/>read-only)]
-    DB -->|rows| API
-    API -->|columns + rows + SQL| U
-```
+Question → Gemini writes SQL → `sql_guard` checks it → SQLite runs it read-only → table.
 
 1. On upload, each CSV is parsed with pandas (delimiter and types detected, column names
    normalized to `snake_case`) and stored as a table in the workspace's own SQLite file.
